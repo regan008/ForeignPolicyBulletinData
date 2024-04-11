@@ -40,6 +40,13 @@ for (i in 1:length(final.metadata$id)){
     ia_download(dir = "txt/", overwrite = FALSE)
 }
 
+write.csv(running.meta, "metadata.csv")
+metadata <- running.meta %>% filter(!grepl("index",id))
+filenames <- as.data.frame(list.files("txt/"))
+
+#There are 20 files that are index files and I think we want to take those and put them in a separate file. They could be useful but shouldn't be included with the main dataset.
+
+
 
 download_row <- function(row, dir, extended_name, overwrite, silence) {
   if (extended_name) {
