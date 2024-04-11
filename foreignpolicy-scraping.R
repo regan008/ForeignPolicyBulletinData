@@ -2,7 +2,7 @@ library(internetarchive)
 library(tidyverse)
 #this script scrapes the Foreign Policy Notices from internet archive.
 #denote which volumes you want
-volumenums <- 15:21
+volumenums <- 22:25
 #this creates an empty dataframe
 df <- data.frame(id=character())
 #go through and get a list of items for each issue. This returns a data frame with the search results for this volume range.

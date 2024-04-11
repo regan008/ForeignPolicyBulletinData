@@ -41,6 +41,8 @@ for (i in 1:length(final.metadata$id)){
 }
 
 
+write.csv(running.meta, "metadata.csv")
+
 download_row <- function(row, dir, extended_name, overwrite, silence) {
   if (extended_name) {
     row$local_file <- paste0(dir, "/", row$id, gsub("/", "-", row$file))
