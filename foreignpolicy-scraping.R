@@ -2,7 +2,7 @@ library(internetarchive)
 library(tidyverse)
 #this script scrapes the Foreign Policy Notices from internet archive.
 #denote which volumes you want
-volumenums <- 15:18
+volumenums <- 15:25
 #this creates an empty dataframe
 df <- data.frame(id=character())
 #go through and get a list of items for each issue. This returns a data frame with the search results for this volume range.
@@ -19,7 +19,6 @@ for (i in 1:length(df$id)) {
   meta <<- as.data.frame(ia_metadata(issue))
   metadata <<- add_row(metadata, meta)
 }
-issue <- ia_get_items(df[1,])
 #this culls the metadata from above into a more manageable df. First we filter to only include the info we care about.
 final.metadata <- metadata %>% filter(field == "identifier" | field == "publisher" | field == "date" | field == "identifier-access")
 #make it tidy
@@ -29,7 +28,7 @@ final.metadata$dup <- duplicated(final.metadata$date)
 final.metadata <- final.metadata %>% filter(dup == FALSE)
 #final.metadata <- final.metadata %>% separate_wider_delim(date, "-", names= c("year", "month", "day")) 
 #copy this to our running.meta df so we don't lose this when re-running this for additional years. 
-running.meta <- add_row(final.metadata, running.meta)
+#running.meta <- add_row(final.metadata, running.meta)
 #now go through each id in final.metadata and download the associated text file. Sometimes this fails, if it does it can be rerun and it'll check for already existing files and now redownload them.
 df.files <- data.frame(id=character(), file=character(), type=character())
 for (i in 1:length(final.metadata$id)){
@@ -43,11 +42,26 @@ for (i in 1:length(final.metadata$id)){
     filter(type == "txt") %>% 
     group_by(id) %>% 
     slice(1) %>% 
-    ia_download(dir = "txt/", overwrite = FALSE)
+    ia_download(dir = "txt/", overwrite = FALSE, extended_name = FALSE)
   df.files <<- add_row(df.files, fileinfo)
 }
+saved.copy.finalmetadata <- final.metadata
+saved.copy.df.files <- df.files
 
-write.csv(running.meta, "metadata.csv")
+
+remove.index <- final.metadata %>% filter(grepl("index", id, fixed = FALSE, ignore.case=TRUE))
+remove.index$extension <- ".txt"
+remove.index <- remove.index %>% unite(filename, id, extension, sep="")
+for (i in 1:length(remove.index$identifier)) {
+if (file.exists(paste("txt/", remove.index$filename[i], sep=""))) {
+  print("the file does exist")
+  file.remove(paste("txt/", remove.index$filename[i], sep=""))
+  print(paste("removed: ", "txt/", remove.index$filename[i], sep=""))
+}}
+
+final.metadata <- final.metadata %>% filter(!grepl("index", id, fixed = FALSE, ignore.case=TRUE))
+
+write.csv(final.metadata, "metadata.csv")
 metadata <- running.meta %>% filter(!grepl("index",id))
 filenames <- as.data.frame(list.files("txt/"))
 
