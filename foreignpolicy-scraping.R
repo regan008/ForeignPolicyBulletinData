@@ -60,6 +60,8 @@ if (file.exists(paste("txt/", remove.index$filename[i], sep=""))) {
 }}
 
 final.metadata <- final.metadata %>% filter(!grepl("index", id, fixed = FALSE, ignore.case=TRUE))
+final.metadata$extension <- ".txt"
+final.metadata <- final.metadata %>% unite(filename, id, extension, sep="")
 
 write.csv(final.metadata, "metadata.csv")
 metadata <- running.meta %>% filter(!grepl("index",id))
