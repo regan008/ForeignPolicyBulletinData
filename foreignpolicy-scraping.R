@@ -2,7 +2,7 @@ library(internetarchive)
 library(tidyverse)
 #this script scrapes the Foreign Policy Notices from internet archive.
 #denote which volumes you want
-volumenums <- 22:25
+volumenums <- 15:18
 #this creates an empty dataframe
 df <- data.frame(id=character())
 #go through and get a list of items for each issue. This returns a data frame with the search results for this volume range.
@@ -19,6 +19,7 @@ for (i in 1:length(df$id)) {
   meta <<- as.data.frame(ia_metadata(issue))
   metadata <<- add_row(metadata, meta)
 }
+issue <- ia_get_items(df[1,])
 #this culls the metadata from above into a more manageable df. First we filter to only include the info we care about.
 final.metadata <- metadata %>% filter(field == "identifier" | field == "publisher" | field == "date" | field == "identifier-access")
 #make it tidy
@@ -30,14 +31,20 @@ final.metadata <- final.metadata %>% filter(dup == FALSE)
 #copy this to our running.meta df so we don't lose this when re-running this for additional years. 
 running.meta <- add_row(final.metadata, running.meta)
 #now go through each id in final.metadata and download the associated text file. Sometimes this fails, if it does it can be rerun and it'll check for already existing files and now redownload them.
+df.files <- data.frame(id=character(), file=character(), type=character())
 for (i in 1:length(final.metadata$id)){
   issue <- ia_get_items(final.metadata$id[i])
   print(paste("getting item #", final.metadata$id[i], "from", final.metadata$date[i]))
+  final.metadata
+  fileinfo <- ia_files(issue) %>% 
+    filter(type == "txt") %>% 
+    group_by(id)
   ia_files(issue) %>% 
     filter(type == "txt") %>% 
     group_by(id) %>% 
     slice(1) %>% 
     ia_download(dir = "txt/", overwrite = FALSE)
+  df.files <<- add_row(df.files, fileinfo)
 }
 
 write.csv(running.meta, "metadata.csv")
